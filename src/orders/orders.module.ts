@@ -9,5 +9,6 @@ import { TransportsModule } from 'src/transports/transports.module';
   imports: [
     TransportsModule,
   ],
+  exports: [OrdersService]
 })
 export class OrdersModule { }

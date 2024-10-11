@@ -18,10 +18,10 @@ export class OrdersController {
     return this.ordersService.findAll();
   }
 
-  @MessagePattern('findOneOrder')
-  findOne(@Payload() id: number) {
-    return this.ordersService.findOne(id);
-  }
+  // @MessagePattern('findOneOrder')
+  // findOne(@Payload() id: number) {
+  //   return this.ordersService.findOne(id);
+  // }
 
   @MessagePattern('updateOrder')
   update(@Payload() updateOrderDto: UpdateOrderDto) {

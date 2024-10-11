@@ -68,8 +68,12 @@ export class OrdersService extends PrismaClient implements OnModuleInit {
     return `This action returns all orders`;
   }
 
-  findOne(id: number) {
-    return `This action returns a #${id} order`;
+  async findBacklogs() {
+    return await this.orders.findMany({
+      where: {
+        status: 'BACKLOG'
+      }
+    })
   }
 
   update(id: number, updateOrderDto: UpdateOrderDto) {
