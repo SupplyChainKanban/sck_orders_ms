@@ -14,9 +14,11 @@ datasource db {
 }
 
 enum OrderStatus {
-  PENDING
-  IN_PROCESS
-  CANCELED
+  BACKLOG
+  TO_BUY
+  IN_BUYING_PROCESS
+  BOUGHT
+  DISMISSED
 }
 
 model Orders {
