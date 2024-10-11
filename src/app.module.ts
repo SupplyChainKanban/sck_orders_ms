@@ -4,7 +4,11 @@ import { CronModule } from './cron/cron.module';
 import { ScheduleModule } from '@nestjs/schedule';
 
 @Module({
-  imports: [OrdersModule, CronModule, ScheduleModule.forRoot()],
+  imports: [
+    OrdersModule,
+    CronModule,
+    ScheduleModule.forRoot(),
+  ],
   controllers: [],
   providers: [],
 })
