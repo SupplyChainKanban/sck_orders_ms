@@ -5,6 +5,7 @@ import { OrderStatus, PrismaClient } from '@prisma/client';
 import { SCK_NATS_SERVICE } from 'src/config';
 import { ClientProxy } from '@nestjs/microservices';
 import { ChangeOrderStatusDto } from './dto/change-order-status.dto';
+import { predictionStatus } from './enums/data.enum';
 
 @Injectable()
 export class OrdersService extends PrismaClient implements OnModuleInit {
@@ -20,42 +21,50 @@ export class OrdersService extends PrismaClient implements OnModuleInit {
   }
 
   async create(createOrderDto: CreateOrderDto) {
-
-    const existingOrder = await this.orders.findFirst({
-      where: {
-        materialID: createOrderDto.materialID,
-        status: {
-          notIn: ['BOUGHT', 'DISMISSED']
+    try {
+      const existingOrder = await this.orders.findFirst({
+        where: {
+          materialID: createOrderDto.materialID,
+          status: {
+            notIn: ['BOUGHT', 'DISMISSED']
+          }
         }
+      })
+      console.log({ ordenExistente: existingOrder })
+
+      if (!existingOrder) {
+        await this.orders.create({
+          data: createOrderDto
+        })
+        this.client.emit('update.prediction.status', { id: createOrderDto.predictionID, status: predictionStatus.CREATION_DONE })
+        return;
       }
-    })
-    console.log({ ordenExistente: existingOrder })
 
-    if (!existingOrder) {
-      await this.orders.create({
-        data: createOrderDto
-      })
-      return;
+      if (existingOrder.status === 'BACKLOG') {
+        if (
+          existingOrder.orderQuantity === createOrderDto.orderQuantity &&
+          existingOrder.predictedDate === createOrderDto.predictedDate &&
+          existingOrder.predictionID === createOrderDto.predictionID
+        ) return;
+
+        await this.orders.update({
+          where: { id: existingOrder.id },
+          data: {
+            orderQuantity: createOrderDto.orderQuantity,
+            predictedDate: createOrderDto.predictedDate,
+            predictionID: createOrderDto.predictionID,
+          }
+        })
+        this.client.emit('update.prediction.status', { id: createOrderDto.predictionID, status: predictionStatus.UPDATED_DONE })
+        return;
+      } else {
+        this.client.emit('update.prediction.status', { id: createOrderDto.predictionID, status: predictionStatus.PROCESS_DONE })
+      }
+
+    } catch (error) {
+      this.client.emit('update.prediction.status', { id: createOrderDto.predictionID, status: predictionStatus.ERROR })
     }
-
-    if (existingOrder.status === 'BACKLOG') {
-      if (
-        existingOrder.orderQuantity === createOrderDto.orderQuantity &&
-        existingOrder.predictedDate === createOrderDto.predictedDate &&
-        existingOrder.predictionID === createOrderDto.predictionID
-      ) return;
-
-      await this.orders.update({
-        where: { id: existingOrder.id },
-        data: {
-          orderQuantity: createOrderDto.orderQuantity,
-          predictedDate: createOrderDto.predictedDate,
-          predictionID: createOrderDto.predictionID,
-        }
-      })
-    }
-
-    return 'This action adds a new order';
+    return;
   }
 
 
@@ -97,14 +106,27 @@ export class OrdersService extends PrismaClient implements OnModuleInit {
 
       if (status === OrderStatus.TO_BUY) {
         const order = await this.findOne(id);
-
-
+        this.emitToErpIntegration(id, order.materialID, order.orderQuantity, order.predictedDate)
         console.log({ order })
       }
 
     } catch (error) {
       // handleExceptions(error, this.logger);
       console.log({ error })
+    }
+  }
+
+  private emitToErpIntegration(id: string, materialID: string, orderQuantity: number, predictedDate: Date) {
+    try {
+      this.client.emit('createErpIntegration', {
+        materialID,
+        orderQuantity,
+        predictedDate: predictedDate,
+        orderId: id,
+      });
+    } catch (error) {
+      console.log({ error })
+      // handleExceptions(error, this.logger)
     }
   }
 

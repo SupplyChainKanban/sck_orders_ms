@@ -8,3 +8,12 @@ export const orderStatusList = [
     OrderStatus.BOUGHT,
     OrderStatus.DISMISSED,
 ]
+
+export enum predictionStatus {
+    PENDING = 'PENDING',
+    CREATION_DONE = 'CREATION_DONE',
+    UPDATED_DONE = 'UPDATED_DONE',
+    PROCESS_DONE = 'PROCESS_DONE',
+    ERROR = 'ERROR',
+}
+

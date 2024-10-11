@@ -10,7 +10,7 @@ export class CronService {
 
   }
 
-  @Cron(CronExpression.EVERY_MINUTE)
+  @Cron(CronExpression.EVERY_5_MINUTES)
   async checkForOrderToBuy() {
 
     const backlogOrders = await this.ordersService.findToBuy();
