@@ -6,6 +6,7 @@ import { SCK_NATS_SERVICE } from 'src/config';
 import { ClientProxy } from '@nestjs/microservices';
 import { ChangeOrderStatusDto } from './dto/change-order-status.dto';
 import { predictionStatus } from './enums/data.enum';
+import { firstValueFrom } from 'rxjs';
 
 @Injectable()
 export class OrdersService extends PrismaClient implements OnModuleInit {
@@ -75,7 +76,13 @@ export class OrdersService extends PrismaClient implements OnModuleInit {
 
 
   async findAll() {
-    return await this.orders.findMany({});
+    const orders = await this.orders.findMany({});
+    const ordersList: any[] = [...orders]
+    for (const order of ordersList) {
+      const dataAnalytics = await firstValueFrom(this.client.send('findOneDataAnalytics', { id: order.dataAnalyticsId }))
+      order.materialName = dataAnalytics.materialName;
+    }
+    return ordersList;
   }
 
   async findToBuy() {

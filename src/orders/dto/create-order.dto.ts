@@ -27,5 +27,9 @@ export class CreateOrderDto {
 
 
 
+    @IsNotEmpty()
+    @IsString()
+    @IsUUID()
+    public dataAnalyticsId: string
 
 }

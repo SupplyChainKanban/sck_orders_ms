@@ -31,6 +31,7 @@ model Orders {
   predictionID  String
   realQuantity  Float       @default(0)
   purchaseDate  DateTime?   
+  dataAnalyticsId String  @default("")
 
   orderDate     DateTime @default(now())
   updatedAt     DateTime @updatedAt
