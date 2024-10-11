@@ -74,8 +74,8 @@ export class OrdersService extends PrismaClient implements OnModuleInit {
 
 
 
-  findAll() {
-    return `This action returns all orders`;
+  async findAll() {
+    return await this.orders.findMany({});
   }
 
   async findToBuy() {
@@ -130,7 +130,4 @@ export class OrdersService extends PrismaClient implements OnModuleInit {
     }
   }
 
-  remove(id: number) {
-    return `This action removes a #${id} order`;
-  }
 }
