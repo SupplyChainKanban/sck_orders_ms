@@ -1,9 +1,10 @@
 import { Inject, Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { CreateOrderDto } from './dto/create-order.dto';
 import { UpdateOrderDto } from './dto/update-order.dto';
-import { PrismaClient } from '@prisma/client';
+import { OrderStatus, PrismaClient } from '@prisma/client';
 import { SCK_NATS_SERVICE } from 'src/config';
 import { ClientProxy } from '@nestjs/microservices';
+import { ChangeOrderStatusDto } from './dto/change-order-status.dto';
 
 @Injectable()
 export class OrdersService extends PrismaClient implements OnModuleInit {
@@ -68,16 +69,43 @@ export class OrdersService extends PrismaClient implements OnModuleInit {
     return `This action returns all orders`;
   }
 
-  async findBacklogs() {
+  async findToBuy() {
     return await this.orders.findMany({
       where: {
-        status: 'BACKLOG'
+        status: {
+          in: ['BACKLOG', 'TO_BUY']
+        }
       }
     })
   }
 
-  update(id: number, updateOrderDto: UpdateOrderDto) {
-    return `This action updates a #${id} order`;
+  async findOne(id: string) {
+    return await this.orders.findUnique({
+      where: {
+        id
+      }
+    })
+  }
+
+  async updateOrderStatus(changeOrderStatusDto: ChangeOrderStatusDto) {
+    const { id, status } = changeOrderStatusDto;
+    try {
+      await this.orders.update({
+        where: { id },
+        data: { status }
+      })
+
+      if (status === OrderStatus.TO_BUY) {
+        const order = await this.findOne(id);
+
+
+        console.log({ order })
+      }
+
+    } catch (error) {
+      // handleExceptions(error, this.logger);
+      console.log({ error })
+    }
   }
 
   remove(id: number) {
