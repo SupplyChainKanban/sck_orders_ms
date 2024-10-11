@@ -37,6 +37,7 @@ export class OrdersService extends PrismaClient implements OnModuleInit {
         await this.orders.create({
           data: createOrderDto
         })
+        this.client.emit('order.status.changed', {});
         this.client.emit('update.prediction.status', { id: createOrderDto.predictionID, status: predictionStatus.CREATION_DONE })
         return;
       }
@@ -56,6 +57,7 @@ export class OrdersService extends PrismaClient implements OnModuleInit {
             predictionID: createOrderDto.predictionID,
           }
         })
+        this.client.emit('order.status.changed', {});
         this.client.emit('update.prediction.status', { id: createOrderDto.predictionID, status: predictionStatus.UPDATED_DONE })
         return;
       } else {
@@ -110,6 +112,7 @@ export class OrdersService extends PrismaClient implements OnModuleInit {
         where: { id },
         data: { status }
       })
+      this.client.emit('order.status.changed', {});
 
       if (status === OrderStatus.TO_BUY) {
         const order = await this.findOne(id);

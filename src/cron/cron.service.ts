@@ -10,22 +10,20 @@ export class CronService {
 
   }
 
-  @Cron(CronExpression.EVERY_5_MINUTES)
+  @Cron(CronExpression.EVERY_MINUTE)
   async checkForOrderToBuy() {
 
     const backlogOrders = await this.ordersService.findToBuy();
-    // console.log({ backlogOrders })
 
     const now = new Date();
 
     for (const order of backlogOrders) {
       const daysToPurchase = (order.predictedDate.getTime() - now.getTime()) / (1000 * 3600 * 24);
 
-      if (daysToPurchase <= 250) {
+      if (daysToPurchase <= 300) {
         await this.ordersService.updateOrderStatus({ id: order.id, status: OrderStatus.TO_BUY });
       }
 
-      // console.log({ daysToPurchase })
 
     }
 
