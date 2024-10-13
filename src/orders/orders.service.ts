@@ -1,12 +1,12 @@
 import { Inject, Injectable, Logger, OnModuleInit } from '@nestjs/common';
 import { CreateOrderDto } from './dto/create-order.dto';
-import { UpdateOrderDto } from './dto/update-order.dto';
 import { OrderStatus, PrismaClient } from '@prisma/client';
 import { SCK_NATS_SERVICE } from 'src/config';
 import { ClientProxy } from '@nestjs/microservices';
 import { ChangeOrderStatusDto } from './dto/change-order-status.dto';
 import { predictionStatus } from './enums/data.enum';
 import { firstValueFrom } from 'rxjs';
+import { sleep } from 'src/helpers/utilities';
 
 @Injectable()
 export class OrdersService extends PrismaClient implements OnModuleInit {
@@ -31,14 +31,15 @@ export class OrdersService extends PrismaClient implements OnModuleInit {
           }
         }
       })
-      console.log({ ordenExistente: existingOrder })
 
       if (!existingOrder) {
-        await this.orders.create({
+        const orderCreated = await this.orders.create({
           data: createOrderDto
         })
         this.client.emit('order.status.changed', {});
         this.client.emit('update.prediction.status', { id: createOrderDto.predictionID, status: predictionStatus.CREATION_DONE })
+        // this.client.emit('order.status.changed', {});
+        // this.emitToErpIntegration(orderCreated.id, orderCreated.materialID, orderCreated.orderQuantity, orderCreated.predictedDate)
         return;
       }
 
@@ -67,15 +68,7 @@ export class OrdersService extends PrismaClient implements OnModuleInit {
     } catch (error) {
       this.client.emit('update.prediction.status', { id: createOrderDto.predictionID, status: predictionStatus.ERROR })
     }
-    return;
   }
-
-
-
-
-
-
-
 
   async findAll() {
     const orders = await this.orders.findMany({});
@@ -116,8 +109,8 @@ export class OrdersService extends PrismaClient implements OnModuleInit {
 
       if (status === OrderStatus.TO_BUY) {
         const order = await this.findOne(id);
+        await sleep(1000);
         this.emitToErpIntegration(id, order.materialID, order.orderQuantity, order.predictedDate)
-        console.log({ order })
       }
 
     } catch (error) {
@@ -128,10 +121,10 @@ export class OrdersService extends PrismaClient implements OnModuleInit {
 
   private emitToErpIntegration(id: string, materialID: string, orderQuantity: number, predictedDate: Date) {
     try {
-      this.client.emit('createErpIntegration', {
+      this.client.emit('send.to.Erp', {
         materialID,
         orderQuantity,
-        predictedDate: predictedDate,
+        predictedDate,
         orderId: id,
       });
     } catch (error) {

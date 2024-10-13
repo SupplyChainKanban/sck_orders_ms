@@ -22,9 +22,41 @@
   <!--[![Backers on Open Collective](https://opencollective.com/nest/backers/badge.svg)](https://opencollective.com/nest#backer)
   [![Sponsors on Open Collective](https://opencollective.com/nest/sponsors/badge.svg)](https://opencollective.com/nest#sponsor)-->
 
-# Orders MicroService
+# Microservicio para la generación de órdenes de compra
+
+En este microservicio se generarán las órdenes de compra según las predicciones que vayan apareciendo. Se enviará un mensaje al microservicio de integración con ERP para que pueda iniciarse el proceso de compra. Luego recibirá feedback del mismo cambiando sus estados.
+
+## Flujo de datos
+
+![](/diagrams/Ms_orders.drawio.png)
+
+## Despliegue
+
+### Ambiente de desarrollo
+
+1. Clonar el repositorio
+2. Instalar dependencias
+3. Crear un archivo **.env** basado en el archivo **.env.template**
+4. Ejecutar migración de prisma
+
+```
+  npx prisma migrate dev
+```
+
+5. Levantar docker
 
 ```
   docker compose up -d
+```
 
+6. Levantar el servidor de NATS
+
+```
+  docker run -d --name nats-main -p 4222:4222 -p 8222:8222 nats
+```
+
+7. Ejecutar
+
+```
+  npm run start:dev
 ```
